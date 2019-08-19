@@ -13,6 +13,7 @@
 #include <stdio.h> //For printf functions
 #include <stdlib.h> // For system functions
 #include <softPwm.h> //for software PWM
+#include <signal.h> //for keyboard interrupt handling
 
 #include "BinClock.h"
 #include "CurrentTime.h"
@@ -53,7 +54,7 @@ void initGPIO(void){
 		pullUpDnControl(BTNS[j], PUD_UP);
 	}
 	//Attach interrupts to Buttons
-	if (wiringPiISR(BTNS[0], INT_EDGE_RISING, &minInc) < 0){
+	if (wiringPiISR(BTNS[0], INT_EDGE_FALLING, &hourInc) < 0){
 		printf("Hour Button ISR error\n");
 	}
 	if (wiringPiISR(BTNS[1], INT_EDGE_RISING, &minInc) < 0){
@@ -70,10 +71,9 @@ void initGPIO(void){
  */
 int main(void){
 	initGPIO();
-
+	signal(SIGINT, cleanGPIO);
 	//Set time
 	toggleTime();
-
 	// Repeat this until we shut down
 	for(;;){
 		//Fetch the time from the RTC
@@ -199,16 +199,15 @@ int decCompensation(int units){
  */
 void hourInc(void){
 	//Debounce
-	printf("increment hour");
 	delay(200);
 	long interruptTime = millis();
 
 	if (interruptTime - lastInterruptTime>200){
-		printf("Interrupt 1 triggered, %x + 1\n", hours);
+		printf("Interrupt 1 triggered, %x\n", hours);
 		//Fetch RTC Time
 		hours = hexCompensation(wiringPiI2CReadReg8(RTC, HOUR));
 		//Increase hours by 1, ensuring not to overflow
-		hours = hFormat(hours+1);
+		hours += 1;
 		//Write hours back to the RTC
 		hours = decCompensation(hours);
 		wiringPiI2CWriteReg8(RTC, HOUR, hours);
@@ -228,7 +227,7 @@ void minInc(void){
 	long interruptTime = millis();
 
 	if (interruptTime - lastInterruptTime>200){
-		printf("Interrupt 2 triggered, %x + 1\n", mins);
+		printf("Interrupt 2 triggered, %x\n", mins);
 		//Fetch RTC Time
 		mins = hexCompensation(wiringPiI2CReadReg8(RTC, MIN));
 		//Increase minutes by 1, ensuring not to overflow
@@ -277,4 +276,13 @@ void int_to_binary_array(unsigned int in, int count, int* out){
 	out[i] = (in & mask) ? 1 : 0;
 	in <<= 1;
 	}
+}
+
+void cleanGPIO(void){
+	digitalWrite(LEDS[0], 0);
+	for (int i = 0; i < sizeof(LEDS)/sizeof(LEDS[0]); i++){
+		pinMode(LEDS[i], INPUT);
+	}
+	pinMode(SECS, INPUT);
+	exit(1);
 }

@@ -16,6 +16,7 @@ void hourInc(void);
 void minInc(void);
 void toggleTime(void);
 void int_to_binary_array(unsigned int in, int count, int* out);
+void cleanGPIO(void);
 
 // define constants
 const char RTCAddr = 0x6f;
