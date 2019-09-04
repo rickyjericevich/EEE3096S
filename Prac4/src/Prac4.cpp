@@ -28,15 +28,17 @@ bool threadReady = false; //using this to finish writing the first column at the
 // Configure your interrupts here.
 // Don't forget to use debouncing.
 void play_pause_isr(void){
-    //Write your logis here
+    //Write your logic here
     delay(200);
-    playing != playing;
+    printf("Paused\n");
+    playing = !playing;
 }
 
 void stop_isr(void){
     // Write your logic here
     delay(200);
-    stopped = true;
+    printf("Stopped\n");
+    stopped = !stopped;
 }
 
 // Setup Function. Called once
@@ -73,23 +75,22 @@ int setup_gpio(void){
  */
 void *playThread(void *threadargs){
     // If the thread isn't ready, don't do anything
-    while(!threadReady)
+    while(!threadReady){
         continue;
-
+    }
     //You need to only be playing if the stopped flag is false
     while(!stopped){
         //Code to suspend playing if paused
         bool SHDN = false;
-	while (playing == false){
-	    if (SHDN == false) {
-	        SHD = true;
-	        unsigned char c[2] = {0b0010 << 4, 0b0};
+	while (!playing){
+	    if (!SHDN) {
+	        SHDN = !SHDN;
+	        unsigned char c[2] = {0b0010 << 4, 0x00};
 	        wiringPiSPIDataRW(SPI_CHAN, c, 2);
 	    }
-	    delay(50);
 	}
 
-	wiringPiSPIDataRw(SPI_CHAN,  buffer[bufferReading][buffer_location], 2};
+	wiringPiSPIDataRW(SPI_CHAN,  buffer[bufferReading][buffer_location], 2);
 	buffer_location++;
 	if (buffer_location >= BUFFER_SIZE){
 	    buffer_location = 0;
@@ -120,8 +121,8 @@ int main(){
     pthread_attr_getschedparam (&tattr, &param); // safe to get existing scheduling param
     param.sched_priority = newprio;              // set the priority; others are unchanged
     pthread_attr_setschedparam (&tattr, &param); // setting the new scheduling param
-    pthread_create(&thread_id, &tattr, playThread, (void *)1); // with new priority specified
-
+    pthread_create(&thread_id, &tattr, playThread, (void *)-1); // with new priority specified
+    printf("Thread initialised\n");
     /* Read from the file, character by character
      * You need to perform two operations for each character read from the file
      * You will require bit shifting
@@ -143,8 +144,9 @@ int main(){
     if (filePointer == NULL) {
         perror("Error while opening the file\n");
         exit(EXIT_FAILURE);
+    } else {
+	printf("File opened\n");
     }
-
     int counter = 0;
     int bufferWriting = 0;
     // Have a loop to read from the file
