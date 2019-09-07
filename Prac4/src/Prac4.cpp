@@ -29,16 +29,17 @@ bool threadReady = false; //using this to finish writing the first column at the
 // Don't forget to use debouncing.
 void play_pause_isr(void){
     //Write your logic here
-    delay(200);
-    printf("Paused\n");
+    delay(500);
     playing = !playing;
+    (playing) ? printf("Playing\n") : printf("Paused\n");
 }
 
 void stop_isr(void){
     // Write your logic here
-    delay(200);
+    delay(500);
     printf("Stopped\n");
     stopped = !stopped;
+    exit(0);
 }
 
 // Setup Function. Called once
@@ -79,24 +80,22 @@ void *playThread(void *threadargs){
         continue;
     }
     //You need to only be playing if the stopped flag is false
+    printf("Reading from buffer %d\n", bufferReading);
     while(!stopped){
         //Code to suspend playing if paused
-        bool SHDN = false;
 	while (!playing){
-	    if (!SHDN) {
-	        SHDN = !SHDN;
-	        unsigned char c[2] = {0b0010 << 4, 0x00};
-	        wiringPiSPIDataRW(SPI_CHAN, c, 2);
-	    }
+	    continue;
 	}
 
-	wiringPiSPIDataRW(SPI_CHAN,  buffer[bufferReading][buffer_location], 2);
+	wiringPiSPIDataRW(SPI_CHAN, buffer[bufferReading][buffer_location], 2);
+
 	buffer_location++;
 	if (buffer_location >= BUFFER_SIZE){
 	    buffer_location = 0;
 	    bufferReading = !bufferReading;
 	}
     }
+    printf("Exiting thread\n");
     pthread_exit(NULL);
 }
 
@@ -147,8 +146,10 @@ int main(){
     } else {
 	printf("File opened\n");
     }
+
     int counter = 0;
     int bufferWriting = 0;
+    printf("Writing to buffer %d\n", bufferWriting);
     // Have a loop to read from the file
     while((ch = fgetc(filePointer)) != EOF){
         while(threadReady && bufferWriting==bufferReading && counter==0){
@@ -156,18 +157,21 @@ int main(){
             continue;
         }
         //Set config bits for first 8 bit packet and OR with upper bits
-        buffer[bufferWriting][counter][0] = (0b0101 << 4) | (ch >> 4);
+        buffer[bufferWriting][counter][0] = (0b0111 << 4) | (ch >> 6);
         //Set next 8 bit packet
-        buffer[bufferWriting][counter][1] = ch << 4;
+        buffer[bufferWriting][counter][1] = ch << 2;
 
         counter++;
         if(counter >= BUFFER_SIZE+1){
+	    printf("Buffer %d is full, ", bufferWriting);
             if(!threadReady){
+		printf("start playing\n");
                 threadReady = true;
             }
 
             counter = 0;
-            bufferWriting = (bufferWriting+1)%2;
+            bufferWriting = (bufferWriting + 1)%2;
+	    printf("writing to buffer %d\n", bufferWriting);
         }
     }
 
@@ -178,5 +182,6 @@ int main(){
     //Join and exit the playthread
     pthread_join(thread_id, NULL);
     pthread_exit(NULL);
+    printf("Exiting program");
     return 0;
 }
