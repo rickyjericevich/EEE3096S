@@ -149,12 +149,12 @@ int main(){
     }
 
     int counter = 0, bufferWriting = 0, c = 0;
-    unsigned char chararr[150];
+//    unsigned char chararr[150];
 
     // Have a loop to read from the file
     while((ch = fgetc(filePointer)) != EOF){
 	// EOF isnt working on the pi, so manually check for end-of-file
-	chararr[c++] = ch;
+/*	chararr[c++] = ch;
 	if (c == 150){
 	    int num = 0;
 	    for (int i = 0; i < c; i++){
@@ -166,6 +166,10 @@ int main(){
 		stopped = !stopped;
 	    }
 	    c = 0;
+	}*/
+	(ch == 129) ? c++ : c = 0;
+	if (c == 150){
+	    stopped = !stopped;
 	}
 
         while(threadReady && bufferWriting==bufferReading && counter==0){
