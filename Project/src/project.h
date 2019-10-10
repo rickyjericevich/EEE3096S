@@ -11,6 +11,8 @@
 #include <math.h>
 #include <pthread.h>
 #include <iostream>
+#include <wiringPiI2C.h> 
+#include <softPwm.h> //for software PWM
 
 //Define buttons
 const int BTNS[] = {4, 5, 21, 22};
