@@ -11,9 +11,13 @@
 #include <math.h>
 #include <pthread.h>
 #include <iostream>
+#include <wiringPiI2C.h> 
+#include <softPwm.h> //for software PWM
+#include <softTone.h>
 
-//Define buttons
+//Define pins
 const int BTNS[] = {4, 5, 21, 22};
+#define ALARM 6
 
 // define RTC constants 
 #define RTCAddr 0x6f; 
@@ -29,7 +33,7 @@ const int BTNS[] = {4, 5, 21, 22};
 //SPI Settings
 #define SPI_CHAN0 0
 #define SPI_CHAN1 1
-#define SPI_SPEED ??
+#define SPI_SPEED 204800
 
 //Function definitions
 int main(void);
