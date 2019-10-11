@@ -77,10 +77,12 @@ void initThread(){
 }
 
 void *dataThread(void *threadargs){
-    unsigned char alarmTime* = getTime();
+    unsigned char alarmTime[3];
+	alarmTime* = getTime();
     while(1){
         if (!paused){
-            unsigned char currentTime* = getTime();
+            unsigned char currentTime[3]
+			currentTime* = getTime();
             //get data
             
             //type Vout = ...
@@ -114,9 +116,9 @@ void fullReset(){
     long interruptTime = millis();
     if (interruptTime - lastInterruptTime > 200){
         //clear console
-        
+        system("clear");
         sysTime* = getTime();
-    }
+    }	
     lastInterruptTime = interruptTime;
 }
 
