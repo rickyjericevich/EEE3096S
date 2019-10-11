@@ -69,29 +69,31 @@ int main(void){
 
 void *dataThread(void *threadargs){
     int alarmTime = 180;
+    cout << "RTC Time\tSys Timer\tHumidity\tTemp\tLight\tDAC out\t\tAlarm" << endl;
     while(1){
         if (!paused){
             //get data
-            float humidity = 3.32*analogRead(HUMIDITY)/1023;
+            float humidity = 3.28*analogRead(HUMIDITY)/1023;
             int light = analogRead(LDR);
-            float temp = ((3.32*analogRead(THERMISTOR)/1023) - 0.5)/0.01;
+            float temp = (3.28*analogRead(THERMISTOR)/1023 - 0.5)/0.01;
             //Vout
             float Vout = light*temp/1023;
 
-            //print data
-            //printData(humidity, temp, light, Vout);
-            int *currentTime = getTime();
-            //printTime(currentTime);
-            cout << "\t0:0:" << sysTime;//fix
-            cout << "\t" << humidity << " V\t" << temp << " C\t" << light << "\t" << Vout << " V\t";
-            cout << (digitalRead(ALARM) ? "*" : "") << endl;
-
-            //check if alarm must sound
             if (alarmTime >= 180 && (Vout < 0.65 || Vout > 2.65)){
                 alarmTime = 0;
                 digitalWrite(ALARM, 1);
                 cout << "Alarm on" << endl;
             }
+
+            //print data
+            //printData(humidity, temp, light, Vout);
+            int *currentTime = getTime();
+            //printTime(currentTime);
+            cout << "\t\t0:0:" << sysTime;//fix
+            cout << "\t\t" << humidity << " V\t\t" << temp << " C\t" << light << "\t" << Vout << " V\t";
+            cout << (digitalRead(ALARM) ? "*" : "") << endl;
+
+            //check if alarm must sound
         }
         delay(period*1000);
         alarmTime += period;

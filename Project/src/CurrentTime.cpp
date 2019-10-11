@@ -5,8 +5,9 @@ int HH,MM,SS;
 
 void getCurrentTime(void){
   time_t rawtime;
-  struct tm * timeinfo;
   time ( &rawtime );
+
+  struct tm * timeinfo;
   timeinfo = localtime ( &rawtime );
 
   HH = timeinfo ->tm_hour;
