@@ -13,9 +13,11 @@
 #include <iostream>
 #include <wiringPiI2C.h> 
 #include <softPwm.h> //for software PWM
+#include <softTone.h>
 
-//Define buttons
+//Define pins
 const int BTNS[] = {4, 5, 21, 22};
+#define ALARM ??
 
 // define RTC constants 
 #define RTCAddr 0x6f; 
