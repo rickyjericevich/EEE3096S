@@ -3,7 +3,7 @@ using namespace std;
 
 bool paused = 0;
 long lastInterruptTime = 0; //Used for button debounce
-int delay = 1, sysTime[];
+int period = 1, sysTime = 0;
 
 int initPeriphs(void){
     cout << "Setting up..." << endl;
@@ -11,7 +11,7 @@ int initPeriphs(void){
     wiringPiSetup();
 
     //Set up the buttons
-    for(int i; i < sizeof(BTNS)/sizeof(BTNS[0]); i++){
+    for(int i = 0; i < sizeof(BTNS)/sizeof(BTNS[0]); i++){
         pinMode(BTNS[i], INPUT);
         pullUpDnControl(BTNS[i], PUD_UP);
     }
@@ -22,22 +22,22 @@ int initPeriphs(void){
     cout << "Alarm Buzzer done" << endl;
 
     //Attach interrupts to buttons
-    if (wiringPiISR(BTN[0], INT_EDGE_FALLING, &resetAlarm) < 0){
-        cout << "Alarm Reset button (BTN[0]) ISR error" << endl;
+    if (wiringPiISR(BTNS[0], INT_EDGE_FALLING, &resetAlarm) < 0){
+        cout << "Alarm Reset button (BTNS[0]) ISR error" << endl;
     }
-    if (wiringPiISR(BTN[1], INT_EDGE_FALLING, &fullReset) < 0){
-        cout << "Full Reset button (BTN[1]) ISR error" << endl;
+    if (wiringPiISR(BTNS[1], INT_EDGE_FALLING, &fullReset) < 0){
+        cout << "Full Reset button (BTNS[1]) ISR error" << endl;
     }
-    if (wiringPiISR(BTN[2], INT_EDGE_FALLING, &samplingPeriod) < 0){
-        cout << "Sampling Period button (BTN[2]) ISR error" << endl;
+    if (wiringPiISR(BTNS[2], INT_EDGE_FALLING, &samplingPeriod) < 0){
+        cout << "Sampling Period button (BTNS[2]) ISR error" << endl;
     }
-    if (wiringPiISR(BTN[3], INT_EDGE_FALLING, &playpausePrint) < 0){
-        cout << "Print button (BTN[3]) ISR error" << endl;
+    if (wiringPiISR(BTNS[3], INT_EDGE_FALLING, &toggleMonitoring) < 0){
+        cout << "Print button (BTNS[3]) ISR error" << endl;
     }
     cout << "BTNS done" << endl;
 
     // Setting up SPI
-    wiringPiSPISetup(SPI_, SPI_SPEED);//DAC
+    wiringPiSPISetup(DAC_SPI, SPI_SPEED);//DAC
     mcp3004Setup(100, ADC_SPI);
     cout << "SPI setup done" << endl;
 
@@ -61,11 +61,6 @@ int main(void){
     pthread_create(&thread_id, &tattr, dataThread, (void *)-1); // With new priority specified
     cout << "Thread created" << endl;
 
-    sysTime* = getTime();
-    cout << "Started: ";
-    printTime(sysTime);
-    cout << endl;
-
     //Join and exit the playthread
     pthread_join(thread_id, NULL);
     pthread_exit(NULL);
@@ -82,17 +77,25 @@ void *dataThread(void *threadargs){
             float temp = ((3.32*analogRead(THERMISTOR)/1023) - 0.5)/0.01;
             //Vout
             float Vout = light*temp/1023;
+
             //print data
-            printData(humidity, temp, light, Vout);
+            //printData(humidity, temp, light, Vout);
+            int *currentTime = getTime();
+            //printTime(currentTime);
+            cout << "\t0:0:" << sysTime;//fix
+            cout << "\t" << humidity << " V\t" << temp << " C\t" << light << "\t" << Vout << " V\t";
+            cout << (digitalRead(ALARM) ? "*" : "") << endl;
+
             //check if alarm must sound
             if (alarmTime >= 180 && (Vout < 0.65 || Vout > 2.65)){
-                alarmTime* = getTime();
+                alarmTime = 0;
                 digitalWrite(ALARM, 1);
                 cout << "Alarm on" << endl;
             }
         }
-        delay(delay*1000);
-        alarmTime += delay;
+        delay(period*1000);
+        alarmTime += period;
+	sysTime += period;
     }
     pthread_exit(NULL);
 }
@@ -115,7 +118,7 @@ void fullReset(void){
     if (interruptTime - lastInterruptTime > 200){
         //clear console
         system("clear");
-        sysTime* = getTime();
+        sysTime = 0;
     }
     lastInterruptTime = interruptTime;
 }
@@ -124,8 +127,8 @@ void samplingPeriod(void){
     // Debounce
     long interruptTime = millis();
     if (interruptTime - lastInterruptTime > 200){
-        delay = (delay == 5) ? 1 : delay*delay + 1;
-        cout << +delay << "s sampling period" << endl;
+        period = (period == 5) ? 1 : period*period + 1;
+        cout << period << "s sampling period" << endl;
     }
     lastInterruptTime = interruptTime;
 }
@@ -134,23 +137,19 @@ void toggleMonitoring(void){
     // Debounce
     long interruptTime = millis();
     if (interruptTime - lastInterruptTime > 200){
-        paused = !paused
+        paused = !paused;
         cout << (paused ? "paused" : "unpaused") << endl;
     }
     lastInterruptTime = interruptTime;
 }
 
 int* getTime(){
-    return {getHours(), getMins(), getSecs()};
+    int time[3] = {getHours(), getMins(), getSecs()};
+    return time;
 }
 
-void printData(float H,int T, float L, float V){
-    int currentTime[] = getTime();
-    printTime(currentTime);
-    cout << "\t";
-    printTime({currentTime[0] - sysTime[0], currentTime[1] - sysTime[1], currentTime[2] - sysTime[2]});
-    cout << "\t" << H << " V\t" << T << " C\t" << L << "\t" << V << " V\t";
-    cout << (digitalRead(ALARM) ? "*" : "") << endl;
+void printData(float H, int T, float L, float V){
+
 }
 
 void printTime(int* time){
