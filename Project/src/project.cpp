@@ -5,8 +5,7 @@ bool paused = 0;
 long lastInterruptTime = 0; //Used for button debounce 
 int RTC; //Holds the RTC instance
 unsigned short int light = 0, temp = 0, humidity = 0;
-unsigned char delay = 1;
-unsigned int sysTime[];
+unsigned char delay = 1, sysTime[];
 
 int initPeriphs(){
     cout << "Setting up..." << endl;
@@ -23,8 +22,8 @@ int initPeriphs(){
     cout << "Buttons done" << endl;
 
     //Set up the tone for the alarm buzzer
-    softToneCreate (??)
-    //cout << "Alarm Buzzer done" << endl;
+    pinMode(ALARM, OUTPUT);
+    cout << "Alarm Buzzer done" << endl;
 
     //Attach interrupts to buttons 
     if (wiringPiISR(BTN[0], INT_EDGE_FALLING, &resetAlarm) < 0){
@@ -47,7 +46,6 @@ int initPeriphs(){
     cout << "SPI setup done" << endl;
 
     cout << "Setup done" << endl;
-
     return 0;
 }
 
@@ -55,14 +53,13 @@ int main(){
     // Call the setup GPIO function
     if (initPeriphs() == -1) return 0;
     initThread();
-    //sysTime[] = currentime
+    sysTime* = getTime();
+    printTime(sysTime);
     
-    while (1){
-        if (!paused){
-            
-        }
-	delay(delay*1000);
-    }
+    //Join and exit the playthread
+    pthread_join(thread_id, NULL);
+    pthread_exit(NULL);
+    return 0;
 }
 
 void initThread(){
@@ -80,22 +77,33 @@ void initThread(){
 }
 
 void *dataThread(void *threadargs){
+    unsigned char alarmTime* = getTime();
     while(1){
-        
-        if ((currenttime - alarmtime) >= 3 min && (Vout < 0.65 || Vout > 2.65)){
-            alarmtime = 0
-            softToneWrite(ALARM, 1000); // 1kHz frequency
-            cout << "Alarm on" << endl;
+        if (!paused){
+            unsigned char currentTime* = getTime();
+            //get data
+            
+            //type Vout = ...
+            
+            //print data
+            
+            //check if alarm must sound
+            if ((currentTime[1] - alarmTime[1]) >= 3 && (Vout < 0.65 || Vout > 2.65)){
+                alarmTime* = getTime();
+                digitalWrite(ALARM, 1);
+                cout << "Alarm on" << endl;
+            }
         }
+        delay(delay*1000);
     }
-	
+    pthread_exit(NULL);
 }
 
 void resetAlarm(){
 	// Debounce
     long interruptTime = millis();
     if (interruptTime - lastInterruptTime > 200){
-        softToneWrite(ALARM, 0);
+        digitalWrite(ALARM, 0);
         cout << "Alarm off" << endl;
     }
     lastInterruptTime = interruptTime;
@@ -107,7 +115,7 @@ void fullReset(){
     if (interruptTime - lastInterruptTime > 200){
         //clear console
         
-        //sysTime = currentime
+        sysTime* = getTime();
     }
     lastInterruptTime = interruptTime;
 }
@@ -130,4 +138,21 @@ void playpausePrint(){
         cout << (paused ? "paused" : "unpaused") << endl;
     }
     lastInterruptTime = interruptTime;
+}
+
+unsigned char* getRTCTime(){
+    unsigned char time[] = {
+        BCDtoDecimal(wiringPiI2CReadReg8(RTC, HOUR)),
+        BCDtoDecimal(wiringPiI2CReadReg8(RTC, MIN)),
+        BCDtoDecimal(wiringPiI2CReadReg8(RTC, SEC) - 0x80);//double check this
+                           }
+    return time;
+}
+
+void printTime(unsigned char* time){
+        cout << +time[0] << ":" << +time[1] << ":" << +time[2] << endl;
+}
+
+unsigned char BCDtoDecimal(unsigned char bcd){
+    return bcd - 6*(bcd >> 4);
 }
