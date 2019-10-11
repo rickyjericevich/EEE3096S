@@ -1,13 +1,15 @@
 #include "project.h"
+using namespace std;
 
+bool paused = 0;
 long lastInterruptTime = 0; //Used for button debounce 
 int RTC; //Holds the RTC instance
-usigned short int light = 0, temp = 0, humidity = 0;
-char delay = 1;
-int sysTime[] = {0, 0, 0};
+unsigned short int light = 0, temp = 0, humidity = 0;
+unsigned char delay = 1;
+unsigned int sysTime[];
 
 int initPeriphs(){
-    printf("Setting up...\n");
+    cout << "Setting up..." << endl;
 
     wiringPiSetup();
 
@@ -18,48 +20,48 @@ int initPeriphs(){
         pinMode(BTNS[i], INPUT);
         pullUpDnControl(BTNS[i], PUD_UP);
     }
-    printf("Buttons done\n");
+    cout << "Buttons done" << endl;
 
-    //Set up the tone for the alarm buzzer 
-    
-    //printf("Alarm Buzzer done\n");
+    //Set up the tone for the alarm buzzer
+    softToneCreate (??)
+    //cout << "Alarm Buzzer done" << endl;
 
     //Attach interrupts to buttons 
     if (wiringPiISR(BTN[0], INT_EDGE_FALLING, &resetAlarm) < 0){
-	    printf("Alarm Reset button (BTN[0]) ISR error\n");
+        cout << "Alarm Reset button (BTN[0]) ISR error" << endl;
     }
     if (wiringPiISR(BTN[1], INT_EDGE_FALLING, &fullReset) < 0){
-	    printf("Full Reset button (BTN[1]) ISR error\n");
+        cout << "Full Reset button (BTN[1]) ISR error" << endl;
     }
     if (wiringPiISR(BTN[2], INT_EDGE_FALLING, &samplingPeriod) < 0){
-	    printf("Sampling Period button (BTN[2]) ISR error\n");
+        cout << "Sampling Period button (BTN[2]) ISR error" << endl;
     }
     if (wiringPiISR(BTN[3], INT_EDGE_FALLING, &playpausePrint) < 0){
-	    printf("Print button (BTN[3]) ISR error\n");
+        cout << "Print button (BTN[3]) ISR error" << endl;
     }
-    printf("BTNS done\n"); 
+    cout << "BTNS done" << endl;
 
     // Setting up SPI
     wiringPiSPISetup(SPI_CHAN0, SPI_SPEED);//DAC
     wiringPiSPISetup(SPI_CHAN1, SPI_SPEED);//ADC
-    printf("SPI setup done\n");
+    cout << "SPI setup done" << endl;
 
-    printf("Setup done\n");
+    cout << "Setup done" << endl;
 
     return 0;
 }
 
 int main(){
     // Call the setup GPIO function
-    if(initPeriphs() == -1){
-        return 0;
-    }
+    if (initPeriphs() == -1) return 0;
     initThread();
+    //sysTime[] = currentime
     
     while (1){
         if (!paused){
             
         }
+	delay(delay*1000);
     }
 }
 
@@ -74,10 +76,58 @@ void initThread(){
     param.sched_priority = newprio;              // Set the priority; others are unchanged
     pthread_attr_setschedparam (&tattr, &param); // Setting the new scheduling param
     pthread_create(&thread_id, &tattr, dataThread, (void *)-1); // With new priority specified
+    cout << "Thread created" << endl;
 }
 
 void *dataThread(void *threadargs){
     while(1){
         
+        if ((currenttime - alarmtime) >= 3 min && (Vout < 0.65 || Vout > 2.65)){
+            alarmtime = 0
+            softToneWrite(ALARM, 1000); // 1kHz frequency
+            cout << "Alarm on" << endl;
+        }
     }
+	
+}
+
+void resetAlarm(){
+	// Debounce
+    long interruptTime = millis();
+    if (interruptTime - lastInterruptTime > 200){
+        softToneWrite(ALARM, 0);
+        cout << "Alarm off" << endl;
+    }
+    lastInterruptTime = interruptTime;
+}
+
+void fullReset(){
+    // Debounce
+    long interruptTime = millis();
+    if (interruptTime - lastInterruptTime > 200){
+        //clear console
+        
+        //sysTime = currentime
+    }
+    lastInterruptTime = interruptTime;
+}
+
+void samplingPeriod(){
+    // Debounce
+    long interruptTime = millis();
+    if (interruptTime - lastInterruptTime > 200){
+        delay = (delay == 5) ? 1 : delay*delay + 1;
+        cout << +delay << "s sampling period" << endl;
+    }
+    lastInterruptTime = interruptTime;
+}
+
+void playpausePrint(){
+    // Debounce
+    long interruptTime = millis();
+    if (interruptTime - lastInterruptTime > 200){
+        paused = !paused
+        cout << (paused ? "paused" : "unpaused") << endl;
+    }
+    lastInterruptTime = interruptTime;
 }
