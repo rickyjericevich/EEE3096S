@@ -11,18 +11,19 @@
 #include <math.h>
 #include <pthread.h>
 #include <iostream>
-#include <wiringPiI2C.h> 
-#include <softPwm.h> //for software PWM
-#include <softTone.h>
+#include <mcp3004.h>
 
 //Define pins
 const int BTNS[] = {4, 5, 21, 22};
 #define ALARM 6
+#define HUMIDITY 100
+#define LDR 102
+#define THERMISTOR 107
 
-// define RTC constants 
-#define RTCAddr 0x6f; 
-#define SEC 0x00; // see register table in datasheet 
-#define MIN 0x01; 
+// define RTC constants
+#define RTCAddr 0x6f;
+#define SEC 0x00; // see register table in datasheet
+#define MIN 0x01;
 #define HOUR 0x02;
 #define WKDAY 0x03;
 #define DATE 0x04;
@@ -31,11 +32,17 @@ const int BTNS[] = {4, 5, 21, 22};
 #define TIMEZONE 2; // +02H00 (RSA)
 
 //SPI Settings
-#define SPI_CHAN0 0
-#define SPI_CHAN1 1
-#define SPI_SPEED 204800
+#define ADC_SPI 0
+#define DAC_SPI 1
+#define SPI_SPEED 100000
 
 //Function definitions
+int initPeriphs(void);
 int main(void);
+void *dataThread(void *threadargs);
+void resetAlarm(void);
+void fullReset(void);
+void samplingPeriod(void);
+void toggleMonitoring(void);return x - 6 * (x >> 4);
 
 #endif
