@@ -13,6 +13,8 @@
 #include <iostream>
 #include <mcp3004.h>
 
+#include "CurrentTime.h"
+
 //Define pins
 const int BTNS[] = {4, 5, 21, 22};
 #define ALARM 6
