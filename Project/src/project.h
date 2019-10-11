@@ -45,6 +45,9 @@ void *dataThread(void *threadargs);
 void resetAlarm(void);
 void fullReset(void);
 void samplingPeriod(void);
-void toggleMonitoring(void);return x - 6 * (x >> 4);
+void toggleMonitoring(void);
+int* getTime(void);
+void prinData(float H, int T, float L, float V);
+void printTime(int* time);
 
 #endif

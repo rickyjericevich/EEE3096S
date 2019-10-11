@@ -130,7 +130,7 @@ void samplingPeriod(void){
     lastInterruptTime = interruptTime;
 }
 
-void playpausePrint(void){
+void toggleMonitoring(void){
     // Debounce
     long interruptTime = millis();
     if (interruptTime - lastInterruptTime > 200){
@@ -144,8 +144,8 @@ int* getTime(){
     return {getHours(), getMins(), getSecs()};
 }
 
-void printData(float H, unsigned int T, float L, float V){
-    int currentTime[] = {getHours(), getMins(), getSecs()};
+void printData(float H,int T, float L, float V){
+    int currentTime[] = getTime();
     printTime(currentTime);
     cout << "\t";
     printTime({currentTime[0] - sysTime[0], currentTime[1] - sysTime[1], currentTime[2] - sysTime[2]});
@@ -153,6 +153,6 @@ void printData(float H, unsigned int T, float L, float V){
     cout << (digitalRead(ALARM) ? "*" : "") << endl;
 }
 
-void printTime(unsigned char* time){
-    cout << +time[0] << ":" << +time[1] << ":" << +time[2];
+void printTime(int* time){
+    cout << time[0] << ":" << time[1] << ":" << time[2];
 }
