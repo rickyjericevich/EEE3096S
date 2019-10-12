@@ -8,8 +8,7 @@ OBJS = obj/*
 default:
     mkdir -p bin obj
     $(CC) $(CFLAGS) -c src/project.cpp -o obj/project
-    $(CC) $(CFLAGS) -c src/CurrentTime.cpp -o obj/CurrentTime
-    $(CC) $(CFLAGS) obj/project obj/CurrentTime -o bin/proj
+    $(CC) $(CFLAGS) obj/project -o bin/proj
     
 run:
     sudo hwclock -w

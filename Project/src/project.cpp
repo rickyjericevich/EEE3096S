@@ -102,6 +102,8 @@ void fullReset(void){
     if (interruptTime - lastInterruptTime > 200){
         //clear console
         system("clear");
+        delay(150);
+        printf("RTC Time\tSys Timer\tHumidity\tTemp\tLight\tDAC Out\tAlarm\n");
         sysTime = 0;
     }
     lastInterruptTime = interruptTime;
