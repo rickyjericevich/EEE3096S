@@ -39,15 +39,13 @@ const int BTNS[] = {4, 5, 21, 22};
 #define SPI_SPEED 100000
 
 //Function definitions
-int initPeriphs(void);
+void initPeriphs(void);
 int main(void);
 void *dataThread(void *threadargs);
 void resetAlarm(void);
 void fullReset(void);
 void samplingPeriod(void);
 void toggleMonitoring(void);
-int* getTime(void);
-void prinData(float H, int T, float L, float V);
-void printTime(int* time);
+void printTime(int secs);
 
 #endif
