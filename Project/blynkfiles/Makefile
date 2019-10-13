@@ -8,8 +8,8 @@
 
 CC ?= gcc
 CXX ?= g++
-CXXFLAGS += -I ../src/ -I ./ -DLINUX
-LDFLAGS += -lrt -lpthread
+CXXFLAGS += -I ../src/ -I ./ -DLINUX -DRASPBERRY
+LDFLAGS += -lrt -lpthread -lwiringPi
 
 ifeq ($(build),debug)
 	CXXFLAGS += -c -g2 -O0 \
@@ -34,20 +34,15 @@ ifeq ($(build),debug)
 		-Wunused-function  -Wunused-label  \
 		-Wunused-value  -Wunused-variable \
 		-Wvolatile-register-var  -Wwrite-strings
-	
+
 	# Disable some warnings
 	CXXFLAGS += -Wno-variadic-macros -Wno-unused-parameter -Wno-vla
-	
+
 	# Uncomment this to get pedantic warnings:
 	#CXXFLAGS += -pedantic -Wvariadic-macros -Wunused-parameter -Waggregate-return -Wcast-qual -Wpadded
 else
 	CXXFLAGS += -c -O3 -w
 	LDFLAGS += -s
-endif
-
-ifeq ($(target),raspberry)
-	CXXFLAGS += -DRASPBERRY
-	LDFLAGS += -lwiringPi
 endif
 
 SOURCES=main.cpp \

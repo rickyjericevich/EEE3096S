@@ -2,7 +2,6 @@
 #define PROJECT_H
 
 //Includes
-//#include <wiringPi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <wiringPiSPI.h>
@@ -29,8 +28,7 @@ void resetAlarm(void);
 void fullReset(void);
 void samplingPeriod(void);
 void toggleMonitoring(void);
-void printData(time_t N, time_t S, float H, int T, int L, float V, int A);
 void printHeaders(void);
-void sendToBlynk(time_t sysT, int sampleT, int alarm, float H, int T, int L, float V);
+void outputData(time_t N, time_t S, int P, float H, int T, int L, float V, int A);
 
 #endif

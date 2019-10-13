@@ -1,9 +1,5 @@
 #define BLYNK_PRINT stdout
-#ifdef RASPBERRY
-  #include <BlynkApiWiringPi.h>
-#else
-  #include <BlynkApiLinux.h>
-#endif
+#include <BlynkApiWiringPi.h>
 #include <BlynkSocket.h>
 #include <BlynkOptionsParser.h>
 #include "project.h"
@@ -16,14 +12,6 @@ bool paused = 0;
 unsigned int lastInterruptTime = 0; //Used for button debounce
 int period = 1;
 time_t sysTime;
-
-#include <BlynkWidgets.h>
-WidgetTerminal terminal(V7);
-
-void loop(){
-    Blynk.run();
-}
-
 
 int main(int argc, char* argv[]){
     const char *auth, *serv;
@@ -47,7 +35,7 @@ int main(int argc, char* argv[]){
     pthread_create(&thread_id, &tattr, dataThread, (void *)-1); // With new priority specified
 
     while(true) {
-        loop();
+        Blynk.run();
     }
 
     //Join and exit the playthread
@@ -81,13 +69,16 @@ void initPeriphs(void){
 
 void *dataThread(void *threadargs){
     float humidity, Vout;
-    int temp, light;
+    int temp, light, alarmOn;
+    unsigned int t1, t2;
     time_t alarmTime = 0;
+
     delay(1000);
     printHeaders();
+
     while(1){
         if (!paused){
-            unsigned int t1 = millis(), t2;
+            t1 = millis();
             //get data
             humidity = 3.61*analogRead(HUMIDITY)/1023;
             light = analogRead(LDR);
@@ -105,12 +96,10 @@ void *dataThread(void *threadargs){
                 time(&alarmTime);
                 digitalWrite(ALARM, 1);
             }
-            time_t sT = (time_t)difftime(now, sysTime);
-            int alarmOn = digitalRead(ALARM);
-            printData(now, sT, humidity, temp, light, Vout, alarmOn);
 
-            //send data to blynk
-            sendToBlynk(sT, period, alarmOn, humidity, temp, light, Vout);
+            time_t sT = (time_t)difftime(now, sysTime);
+            alarmOn = digitalRead(ALARM);
+            outputData(now, sT, period, humidity, temp, light, Vout, alarmOn);
 
             t2 = millis();
             delay(period*1000 - (t2 - t1));
@@ -160,9 +149,8 @@ void printHeaders(void){
     printf("RTC Time\tSys Timer\tHumidity\tTemp\tLight\tDAC Out\tAlarm\n");
 }
 
-void printData(time_t N, time_t S, float H, int T, int L, float V, int A){
-    struct tm * t;
-    t = localtime(&N);
+void outputData(time_t N, time_t S, int P, float H, int T, int L, float V, int A){
+    struct tm * t = localtime(&N);
 
     char s[9];
     strftime(s, 9, "%X", t);
@@ -173,20 +161,17 @@ void printData(time_t N, time_t S, float H, int T, int L, float V, int A){
     strftime(s, 9, "%X", t);
     printf("%s\t%1.2f V\t\t%d C\t%d\t%1.2f V\t%s\n", s, H, T, L, V, (A ? "*" : ""));
 
-    char p[35];
-    sprintf(p, "%s %1.2fV %dC  %d  %1.2fV %s\n",s , H, T, L, V, (A ? "*" : ""));
+    char p[30];
+    if (L >999){
+        sprintf(p, "%s %1.2fV %dC  %d  %1.2fV %s\n",s , H, T, L, V, (A ? "*" : ""));
+    } else {
+        sprintf(p, "%s %1.2fV %dC  %d   %1.2fV %s\n",s , H, T, L, V, (A ? "*" : ""));
+    }
+
     Blynk.virtualWrite(V7, p);
-}
-
-void sendToBlynk(time_t sysT, int sampleT, int alarm, float H, int T, int L, float V){
-    char s[9];
-    struct tm * t;
-    t = gmtime(&sysT);
-    strftime(s, 9, "%X", t);
-
     Blynk.virtualWrite(V0, s);
-    Blynk.virtualWrite(V1, sampleT);
-    Blynk.virtualWrite(V2, alarm);
+    Blynk.virtualWrite(V1, P);
+    Blynk.virtualWrite(V2, A);
     Blynk.virtualWrite(V3, H);
     Blynk.virtualWrite(V4, T);
     Blynk.virtualWrite(V5, L);
