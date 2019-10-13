@@ -30,6 +30,6 @@ void resetAlarm(void);
 void fullReset(void);
 void samplingPeriod(void);
 void toggleMonitoring(void);
-void printTime(int secs);
+void printData(time_t N, time_t S, float H, int T, int L, float V);
 
 #endif

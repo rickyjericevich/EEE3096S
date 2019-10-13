@@ -3,7 +3,8 @@ using namespace std;
 
 bool paused = 0;
 long lastInterruptTime = 0; //Used for button debounce
-int period = 1, sysTime = 0;
+int period = 1;
+time_t sysTime;
 
 void initPeriphs(void){
     system("clear");
@@ -28,6 +29,8 @@ void initPeriphs(void){
     // Setting up SPI
     wiringPiSPISetup(DAC_SPI, SPI_SPEED);//DAC
     mcp3004Setup(100, ADC_SPI);
+
+    time(&sysTime);
 }
 
 int main(void){
@@ -54,7 +57,8 @@ int main(void){
 
 void *dataThread(void *threadargs){
     float humidity, Vout;
-    int temp, light, alarmTime = 180;
+    int temp, light;
+    time_t alarmTime = 0;
     printf("RTC Time\tSys Timer\tHumidity\tTemp\tLight\tDAC Out\tAlarm\n");
     while(1){
         if (!paused){
@@ -65,26 +69,17 @@ void *dataThread(void *threadargs){
             //Vout
             Vout = light*humidity/1023;
 
+            time_t now;
+            time(&now);
             //check if alarm must sound
-            if ((alarmTime >= 180) && (Vout < 0.65 || Vout > 2.65)){
-                alarmTime = 0;
+            if ((difftime(now, alarmTime) >= 180) && (Vout < 0.65 || Vout > 2.65)){
+                time(&alarmTime);
                 digitalWrite(ALARM, 1);
             }
 
-            //print data
-            time_t now;
-            time(&now);
-            struct tm * t;
-            t = localtime(&now);
-            char s[9];
-            strftime(s, 9, "%X", t);
-            printf("%s\t", s);
-            printTime(sysTime);
-            printf("%1.2f V\t\t%d C\t%d\t%1.2f V\t%s\n", humidity, temp, light, Vout, (digitalRead(ALARM) ? "*" : ""));
-        }
+            printData(now, (time_t)difftime(now, sysTime), humidity, temp, light, Vout);
+            }
         delay(period*1000);
-        alarmTime += period;
-        sysTime += period;
     }
     pthread_exit(NULL);
 }
@@ -104,7 +99,7 @@ void fullReset(void){
         system("clear");
         delay(150);
         printf("RTC Time\tSys Timer\tHumidity\tTemp\tLight\tDAC Out\tAlarm\n");
-        sysTime = 0;
+        time(&sysTime);
     }
     lastInterruptTime = interruptTime;
 }
@@ -121,6 +116,19 @@ void toggleMonitoring(void){
     long interruptTime = millis();
     if (interruptTime - lastInterruptTime > 200) paused = !paused;
     lastInterruptTime = interruptTime;
+}
+
+void printData(time_t N, time_t S, float H, int T, int L, float V){
+    struct tm * t;
+    t = localtime(&N);
+
+    char s[9];
+    strftime(s, 9, "%X", t);
+    printf("%s\t", s);
+
+    t = gmtime(&S);
+    strftime(s, 9, "%X", t);
+    printf("%s\t%1.2f V\t\t%d C\t%d\t%1.2f V\t%s\n",s , H, T, L, V, (digitalRead(ALARM) ? "*" : ""));
 }
 
 void printTime(int secs){
