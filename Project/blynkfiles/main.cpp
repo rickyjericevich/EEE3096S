@@ -71,7 +71,9 @@ void *dataThread(void *threadargs){
     float humidity, Vout;
     int temp, light, alarmOn;
     unsigned int t1, t2;
-    time_t alarmTime = 0;
+    unsigned char Vdac;
+    unsigned char buffer[2];
+    time_t now, alarmTime = 0;
 
     delay(1000);
     printHeaders();
@@ -85,11 +87,11 @@ void *dataThread(void *threadargs){
             temp = (3.28*analogRead(THERMISTOR)/1023 - 0.5)/0.01;
             Vout = light*humidity/1023;
 
-            unsigned char Vdac = Vout*1023/3.61;
-            unsigned char buffer[2] = {(0b011 << 4) | (Vdac >> 6), Vdac << 2};
+            Vdac = Vout*1023/3.28;
+            buffer[0] = (0b1011 << 4) | 0b1111;//(Vdac >> 6);
+            buffer[1] = 0b11111100;//Vdac << 2;
             wiringPiSPIDataRW(DAC_SPI, buffer , 2);
 
-            time_t now;
             time(&now);
             //check if alarm must sound
             if ((difftime(now, alarmTime) >= 180) && (Vout < 0.65 || Vout > 2.65)){
@@ -97,9 +99,7 @@ void *dataThread(void *threadargs){
                 digitalWrite(ALARM, 1);
             }
 
-            time_t sT = (time_t)difftime(now, sysTime);
-            alarmOn = digitalRead(ALARM);
-            outputData(now, sT, period, humidity, temp, light, Vout, alarmOn);
+            outputData(now, humidity, temp, light, Vout);
 
             t2 = millis();
             delay(period*1000 - (t2 - t1));
@@ -113,7 +113,10 @@ void *dataThread(void *threadargs){
 void resetAlarm(void){
     // Debounce
     unsigned int interruptTime = millis();
-    if (interruptTime - lastInterruptTime > 200) digitalWrite(ALARM, 0);
+    if (interruptTime - lastInterruptTime > 200){
+        digitalWrite(ALARM, 0);
+        Blynk.virtualWrite(V2, 0);
+    }
     lastInterruptTime = interruptTime;
 }
 
@@ -138,7 +141,17 @@ void samplingPeriod(void){
 void toggleMonitoring(void){
     // Debounce
     unsigned int interruptTime = millis();
-    if (interruptTime - lastInterruptTime > 200) paused = !paused;
+    if (interruptTime - lastInterruptTime > 200){
+        paused = !paused;
+        if (paused){
+            Blynk.virtualWrite(V0, "--:--:--");
+            Blynk.virtualWrite(V1, "- ");
+            Blynk.virtualWrite(V3, "-");
+            Blynk.virtualWrite(V4, "-");
+            Blynk.virtualWrite(V5, "-");
+            Blynk.virtualWrite(V6, "-");
+        }
+    }
     lastInterruptTime = interruptTime;
 }
 
@@ -149,28 +162,29 @@ void printHeaders(void){
     printf("RTC Time\tSys Timer\tHumidity\tTemp\tLight\tDAC Out\tAlarm\n");
 }
 
-void outputData(time_t N, time_t S, int P, float H, int T, int L, float V, int A){
-    struct tm * t = localtime(&N);
+void outputData(time_t N, float H, int T, int L, float V){
+    time_t S = (time_t)difftime(N, sysTime);
+    struct tm *t1 = localtime(&N), *t2 = gmtime(&S);
 
     char s[9];
-    strftime(s, 9, "%X", t);
+    strftime(s, 9, "%X", t1);
     printf("%s\t", s);
     Blynk.virtualWrite(V7, s, " ");
 
-    t = gmtime(&S);
-    strftime(s, 9, "%X", t);
+    int A = digitalRead(ALARM);
+    strftime(s, 9, "%X", t2);
     printf("%s\t%1.2f V\t\t%d C\t%d\t%1.2f V\t%s\n", s, H, T, L, V, (A ? "*" : ""));
 
     char p[30];
-    if (L >999){
-        sprintf(p, "%s %1.2fV %dC  %d  %1.2fV %s\n",s , H, T, L, V, (A ? "*" : ""));
+    if (L > 999){
+        sprintf(p, "%s %1.2fV %dC  %d  %1.2fV %s\n",s, H, T, L, V, (A ? "*" : ""));
     } else {
-        sprintf(p, "%s %1.2fV %dC  %d   %1.2fV %s\n",s , H, T, L, V, (A ? "*" : ""));
+        sprintf(p, "%s %1.2fV %dC  %d   %1.2fV %s\n", s, H, T, L, V, (A ? "*" : ""));
     }
 
     Blynk.virtualWrite(V7, p);
     Blynk.virtualWrite(V0, s);
-    Blynk.virtualWrite(V1, P);
+    Blynk.virtualWrite(V1, period);
     Blynk.virtualWrite(V2, A);
     Blynk.virtualWrite(V3, H);
     Blynk.virtualWrite(V4, T);

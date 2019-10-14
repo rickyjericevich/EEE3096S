@@ -29,6 +29,6 @@ void fullReset(void);
 void samplingPeriod(void);
 void toggleMonitoring(void);
 void printHeaders(void);
-void outputData(time_t N, time_t S, int P, float H, int T, int L, float V, int A);
+void outputData(time_t N, float H, int T, int L, float V);
 
 #endif

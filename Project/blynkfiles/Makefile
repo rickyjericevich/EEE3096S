@@ -1,4 +1,4 @@
-# 
+#
 # To build on RaspberryPi:
 # 1. Install WiringPi: http://wiringpi.com/download-and-install/
 # 2. Run:
@@ -58,7 +58,10 @@ all: $(SOURCES) $(EXECUTABLE)
 clean:
 	-rm $(OBJECTS) $(EXECUTABLE)
 
-$(EXECUTABLE): $(OBJECTS) 
+run:
+	sudo ./blynk --token=5732dJ4HwLgnzHV7gzfY31_x2lROjyMW
+
+$(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(OBJECTS) $(LDFLAGS) -o $@
 
 .cpp.o:
