@@ -1,6 +1,6 @@
-/* After installing the blynk library, place main.cpp, Makefile, project.h
- * in the blynk-library/linux folder. Build using make and run using make run
- */
+// After installing the blynk library, place main.cpp, Makefile, project.h
+// in the blynk-library/linux folder. Build using make and run using make run
+
 #define BLYNK_PRINT stdout
 #include <BlynkApiWiringPi.h>
 #include <BlynkSocket.h>
@@ -21,10 +21,8 @@ int main(int argc, char* argv[]){
     parse_options(argc, argv, auth, serv, port);
 
     Blynk.begin(auth, serv, port);
-    //set up the pi
-    initPeriphs();
 
-    //create thread
+    initPeriphs();
     piThreadCreate(dataThread);
 
     while(true) {
@@ -35,24 +33,19 @@ int main(int argc, char* argv[]){
 }
 
 void initPeriphs(void){
-    wiringPiSetupSys();
 
-    //set up the buttons
     for(int i = 0; i < sizeof(BTNS)/sizeof(BTNS[0]); i++){
         pinMode(BTNS[i], INPUT);
         pullUpDnControl(BTNS[i], PUD_UP);
     }
 
-    //set up the tone for the alarm buzzer
     pinMode(ALARM, OUTPUT);
 
-    //attach interrupts to buttons
     wiringPiISR(BTNS[0], INT_EDGE_FALLING, &resetAlarm);
     wiringPiISR(BTNS[1], INT_EDGE_FALLING, &fullReset);
     wiringPiISR(BTNS[2], INT_EDGE_FALLING, &samplingPeriod);
     wiringPiISR(BTNS[3], INT_EDGE_FALLING, &toggleMonitoring);
 
-    //setting up SPI
     wiringPiSPISetup(DAC_SPI, SPI_SPEED);
     mcp3004Setup(100, ADC_SPI);
 
@@ -66,12 +59,13 @@ PI_THREAD (dataThread){
     time_t now, alarmTime = 0;
 
     delay(1000);
+    period = 1;
     printHeaders();
 
     while(true){
         if (!paused){
             t1 = millis();
-            //get data
+
             humidity = 3.61*analogRead(HUMIDITY)/1023;
             light = analogRead(LDR);
             temp = (3.28*analogRead(THERMISTOR)/1023 - 0.5)/0.01;
@@ -82,7 +76,6 @@ PI_THREAD (dataThread){
             wiringPiSPIDataRW(DAC_SPI, buffer , 2);
 
             time(&now);
-            //check if alarm must sound
             if ((difftime(now, alarmTime) >= 10) && (Vout < 0.65 || Vout > 2.65)){
                 time(&alarmTime);
                 digitalWrite(ALARM, 1);
@@ -92,14 +85,13 @@ PI_THREAD (dataThread){
 
             delay(period*1000 - (millis() - t1));
         } else {
-            delay(200); //less cpu
+            delay(200);
         }
     }
     return NULL;
 }
 
 void resetAlarm(void){
-    // Debounce
     unsigned int interruptTime = millis();
     if (interruptTime - lastInterruptTime > 200){
         digitalWrite(ALARM, 0);
@@ -109,10 +101,8 @@ void resetAlarm(void){
 }
 
 void fullReset(void){
-    // Debounce
     unsigned int interruptTime = millis();
     if (interruptTime - lastInterruptTime > 200){
-        //clear console
         printHeaders();
         time(&sysTime);
     }
@@ -120,7 +110,6 @@ void fullReset(void){
 }
 
 void samplingPeriod(void){
-    // Debounce
     unsigned int interruptTime = millis();
     if (interruptTime - lastInterruptTime > 200){
         period = (period == 5) ? 1 : period*period + 1;
@@ -133,7 +122,6 @@ void samplingPeriod(void){
 }
 
 void toggleMonitoring(void){
-    // Debounce
     unsigned int interruptTime = millis();
     if (interruptTime - lastInterruptTime > 200){
         paused = !paused;
@@ -158,7 +146,6 @@ void printHeaders(void){
     system("clear");
     delay(150);
     printf("RTC Time\tSys Timer\tHumidity\tTemp\tLight\tDAC Out\tAlarm\n");
-    period = 1;
     Blynk.virtualWrite(V1, period);
     Blynk.virtualWrite(V2, 0);
 }

@@ -1,26 +1,25 @@
 #ifndef PROJECT_H
 #define PROJECT_H
 
-//Includes
 #include <stdio.h>
 #include <stdlib.h>
 #include <wiringPiSPI.h>
+#include <pthread.h>
 #include <mcp3004.h>
 #include <time.h>
 
-//Define pins
+//define pins
 const int BTNS[] = {23, 24, 5, 6};
 #define ALARM 25
 #define HUMIDITY 100
 #define LDR 102
 #define THERMISTOR 107
 
-//SPI Settings
+//SPI settings
 #define ADC_SPI 0
 #define DAC_SPI 1
 #define SPI_SPEED 100000
 
-//Function definitions
 void initPeriphs(void);
 PI_THREAD(dataThread);
 void resetAlarm(void);
