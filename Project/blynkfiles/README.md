@@ -12,10 +12,10 @@
     $ make clean all
     ```
 
-3. : Pull files from https://github.com/rickyjericevich/EEE3096S/tree/master/Project/blynkfiles
+3. Pull files from https://github.com/rickyjericevich/EEE3096S/tree/master/Project/blynkfiles
      and place them in blynk-library/linux
 
-4. : Build and run:
+4. Build and run:
     ```bash
     $ make
     $ make run
