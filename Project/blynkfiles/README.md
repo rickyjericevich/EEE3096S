@@ -12,8 +12,7 @@
     $ make clean all
     ```
 
-3. Pull files from https://github.com/rickyjericevich/EEE3096S/tree/master/Project/blynkfiles
-     and place them in blynk-library/linux
+3. Pull files from https://github.com/rickyjericevich/EEE3096S/tree/master/Project/blynkfiles and place them in blynk-library/linux
 
 4. Build and run:
     ```bash
@@ -22,7 +21,6 @@
     ```
 
 We have also provided a build script, you can try just running (inside of the "linux" directory):
-
     ```bash
     $ ./build.sh raspberry
     ```
