@@ -1,9 +1,6 @@
-#
 # To build on RaspberryPi:
 # 1. Install WiringPi: http://wiringpi.com/download-and-install/
-# 2. Run:
-#    make target=raspberry
-#    sudo blynk --token=YourAuthToken
+# 2. Run: make; make run (with YourAuthToken)
 #
 
 CC ?= gcc
@@ -59,9 +56,9 @@ clean:
 	-rm $(OBJECTS) $(EXECUTABLE)
 
 run:
-	sudo ./blynk --token=5732dJ4HwLgnzHV7gzfY31_x2lROjyMW
+	sudo ./blynk --token=cCrdP_92cdskFgCErwfgHqJMfdJaOrhT
 
-$(EXECUTABLE): $(OBJECTS)
+$(EXECUTABLE): $(OBJECTS) 
 	$(CXX) $(OBJECTS) $(LDFLAGS) -o $@
 
 .cpp.o:

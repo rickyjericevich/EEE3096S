@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <wiringPiSPI.h>
-#include <pthread.h>
 #include <mcp3004.h>
 #include <time.h>
 
@@ -23,7 +22,7 @@ const int BTNS[] = {23, 24, 5, 6};
 
 //Function definitions
 void initPeriphs(void);
-void *dataThread(void *threadargs);
+PI_THREAD(dataThread);
 void resetAlarm(void);
 void fullReset(void);
 void samplingPeriod(void);
