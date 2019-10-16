@@ -76,7 +76,7 @@ PI_THREAD (dataThread){
             wiringPiSPIDataRW(DAC_SPI, buffer , 2);
 
             time(&now);
-            if ((difftime(now, alarmTime) >= 10) && (Vout < 0.65 || Vout > 2.65)){
+            if ((difftime(now, alarmTime) >= 180) && (Vout < 0.65 || Vout > 2.65)){
                 time(&alarmTime);
                 digitalWrite(ALARM, 1);
             }
